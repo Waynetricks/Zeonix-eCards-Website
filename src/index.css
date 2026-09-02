@@ -1,0 +1,52 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper text-ink font-body antialiased;
+    font-feature-settings: "ss01" on, "cv01" on;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+
+  ::selection {
+    @apply bg-brand/25 text-ink;
+  }
+
+  :focus-visible {
+    outline: 2px solid #4C7A26;
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .hairline {
+    @apply border-t border-ink/10;
+  }
+
+  .container-content {
+    @apply mx-auto max-w-content px-6 sm:px-8 lg:px-10;
+  }
+
+  .eyebrow-mark {
+    @apply inline-flex items-center gap-2 text-[13px] tracking-wide text-brand-deep;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

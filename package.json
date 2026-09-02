@@ -1,0 +1,35 @@
+{
+  "name": "zeonix-ecards",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"vite --host 0.0.0.0\"",
+    "dev:server": "node server/index.mjs",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "check-env": "node server/check-env.mjs",
+    "test:server": "node server/contact-service.test.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "lucide-react": "^1.37.0",
+    "nodemailer": "^9.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "autoprefixer": "^10.5.4",
+    "concurrently": "^9.2.0",
+    "oxlint": "^1.79.0",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.13",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2"
+  }
+}
