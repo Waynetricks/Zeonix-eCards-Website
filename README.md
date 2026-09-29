@@ -14,10 +14,19 @@ tracking, and event reports).
 npm install
 npm run dev        # local dev server
 npm run build      # production build → dist/
-npm run preview    # preview the production build
+npm start          # production server (serves dist/ + API on one port)
 ```
 
 Requires Node.js 18+.
+
+## Going live
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the full production deployment
+guide: hosting (Railway / Render / VPS), environment variables, connecting
+the zeonixecards.com domain, email setup, and a post-deploy test checklist.
+In production one Node process serves both the site and the API from the
+same origin — no CORS configuration needed.
+
 
 ## Project structure
 

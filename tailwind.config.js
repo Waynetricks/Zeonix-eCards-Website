@@ -45,10 +45,15 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-9px)" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(8px) scale(0.96)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
       },
       animation: {
         rise: "rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both",
         drift: "drift 6s ease-in-out infinite",
+        "fade-in": "fade-in 0.5s ease-out both",
       },
     },
   },

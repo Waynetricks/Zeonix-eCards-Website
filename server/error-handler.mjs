@@ -7,9 +7,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const logDir = path.join(__dirname, 'logs');
 
-// Ensure logs directory exists
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+// Ensure logs directory exists (may fail on read-only filesystems — the
+// logger then falls back to console-only output instead of crashing requests)
+let logWritable = false;
+try {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  fs.accessSync(logDir, fs.constants.W_OK);
+  logWritable = true;
+} catch {
+  logWritable = false;
 }
 
 const logFile = path.join(logDir, 'server.log');
@@ -19,7 +27,7 @@ const LogLevel = {
   ERROR: 'ERROR',
   WARN: 'WARN',
   INFO: 'INFO',
-  DEBUG: 'DEBUG'
+  DEBUG: 'DEBUG',
 };
 
 // Current log level based on environment
@@ -36,30 +44,36 @@ function formatLogMessage(level, message, metadata = {}) {
     timestamp,
     level,
     message,
-    ...metadata
+    ...metadata,
   };
-  
+
   return JSON.stringify(logEntry);
 }
 
 function writeToLog(level, message, metadata = {}) {
   if (!shouldLog(level)) return;
-  
+
   const logEntry = formatLogMessage(level, message, metadata);
-  
-  // Write to file
-  fs.appendFileSync(logFile, logEntry + '\n', 'utf8');
-  
+
+  // Write to file (never let logging break a live request)
+  if (logWritable) {
+    try {
+      fs.appendFileSync(logFile, logEntry + '\n', 'utf8');
+    } catch {
+      logWritable = false; // disk full, volume detached, etc.
+    }
+  }
+
   // Also write to console in development
   if (process.env.NODE_ENV !== 'production') {
     const colors = {
       ERROR: '\x1b[31m', // Red
-      WARN: '\x1b[33m',  // Yellow
-      INFO: '\x1b[36m',  // Cyan
-      DEBUG: '\x1b[90m'  // Gray
+      WARN: '\x1b[33m', // Yellow
+      INFO: '\x1b[36m', // Cyan
+      DEBUG: '\x1b[90m', // Gray
     };
     const reset = '\x1b[0m';
-    
+
     console.log(`${colors[level]}[${level}]${reset} ${message}`);
     if (Object.keys(metadata).length > 0) {
       console.log('  Metadata:', metadata);
@@ -75,22 +89,41 @@ export const logger = {
   debug: (message, metadata = {}) => writeToLog(LogLevel.DEBUG, message, metadata),
 };
 
+// CORS allowlist shared with index.mjs — error paths must send the same
+// restricted CORS headers as success paths (no wildcard `*`).
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+function corsHeaders(req) {
+  const headers = {};
+  const origin = req?.headers?.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS';
+    headers['Access-Control-Allow-Headers'] = 'Content-Type';
+    headers['Vary'] = 'Origin';
+  }
+  return headers;
+}
+
 // Error handler middleware
 export function errorHandler(err, req, res) {
-  const errorId = `ERR-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-  
+  const errorId = `ERR-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
   logger.error('Server Error', {
     errorId,
     message: err.message,
     stack: err.stack,
     url: req?.url,
     method: req?.method,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   // Don't expose internal errors in production
   const isProduction = process.env.NODE_ENV === 'production';
-  const errorMessage = isProduction 
+  const errorMessage = isProduction
     ? 'An unexpected error occurred. Please try again later.'
     : err.message;
 
@@ -98,7 +131,7 @@ export function errorHandler(err, req, res) {
     ok: false,
     errorId,
     message: errorMessage,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   if (!isProduction) {
@@ -107,10 +140,9 @@ export function errorHandler(err, req, res) {
 
   const statusCode = err.statusCode || 500;
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'X-Content-Type-Options': 'nosniff',
+    ...corsHeaders(req),
   };
 
   res.writeHead(statusCode, headers);
@@ -120,31 +152,31 @@ export function errorHandler(err, req, res) {
 // Request logger middleware
 export function requestLogger(req, res, next) {
   const startTime = Date.now();
-  
+
   // Log request
   logger.debug('Request received', {
     method: req.method,
     url: req.url,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   // Log response when completed
   const originalEnd = res.end;
-  res.end = function(...args) {
+  res.end = function (...args) {
     const duration = Date.now() - startTime;
     const statusCode = res.statusCode;
-    
+
     logger.info('Request completed', {
       method: req.method,
       url: req.url,
       statusCode,
       duration: `${duration}ms`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     return originalEnd.apply(this, args);
   };
-  
+
   if (next) next();
 }
 
@@ -152,23 +184,21 @@ export function requestLogger(req, res, next) {
 export function validationErrorHandler(validationResult, req, res) {
   logger.warn('Validation failed', {
     errors: validationResult.details || validationResult.message,
-    payload: req.body,
-    url: req.url,
-    timestamp: new Date().toISOString()
+    url: req?.url,
+    timestamp: new Date().toISOString(),
   });
 
   const response = {
     ok: false,
     message: validationResult.message,
     validationErrors: validationResult.details || [],
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'X-Content-Type-Options': 'nosniff',
+    ...corsHeaders(req),
   };
 
   res.writeHead(400, headers);
@@ -180,55 +210,58 @@ const rateLimitStore = new Map();
 export function rateLimiter(options = {}) {
   const windowMs = options.windowMs || 15 * 60 * 1000; // 15 minutes
   const maxRequests = options.maxRequests || 100; // 100 requests per window
-  
-  return function(req, res, next) {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  // Resolve the client IP per request (allows proxy-aware lookup, see index.mjs)
+  const keyResolver = options.keyResolver || ((req) => req.socket.remoteAddress || 'unknown');
+
+  return function (req, res, next) {
+    const ip = keyResolver(req);
     const now = Date.now();
-    
+
     if (!rateLimitStore.has(ip)) {
       rateLimitStore.set(ip, { count: 1, startTime: now });
     } else {
       const record = rateLimitStore.get(ip);
-      
+
       if (now - record.startTime > windowMs) {
         // Reset counter if window has passed
         record.count = 1;
         record.startTime = now;
       } else {
         record.count++;
-        
+
         if (record.count > maxRequests) {
           logger.warn('Rate limit exceeded', {
             ip,
             count: record.count,
             maxRequests,
             windowMs,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
-          
+
           const response = {
             ok: false,
             message: 'Too many requests. Please try again later.',
             retryAfter: Math.ceil((windowMs - (now - record.startTime)) / 1000),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           };
-          
+
           const headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-Content-Type-Options': 'nosniff',
+            'Retry-After': response.retryAfter,
+            ...corsHeaders(req),
           };
-          
+
           res.writeHead(429, headers);
           res.end(JSON.stringify(response));
           return;
         }
       }
     }
-    
+
     // Clean up old entries periodically
-    if (Math.random() < 0.01) { // 1% chance to clean up
+    if (Math.random() < 0.01) {
+      // 1% chance to clean up
       const cutoff = now - windowMs;
       for (const [key, record] of rateLimitStore.entries()) {
         if (record.startTime < cutoff) {
@@ -236,7 +269,7 @@ export function rateLimiter(options = {}) {
         }
       }
     }
-    
+
     if (next) next();
   };
 }

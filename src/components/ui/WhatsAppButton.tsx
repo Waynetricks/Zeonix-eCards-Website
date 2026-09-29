@@ -1,4 +1,5 @@
 import { MessageCircle } from "lucide-react";
+import { openWhatsApp } from "../../config";
 
 interface WhatsAppButtonProps {
   variant?: "primary" | "secondary" | "floating";
@@ -7,20 +8,12 @@ interface WhatsAppButtonProps {
   children?: React.ReactNode;
 }
 
-const WHATSAPP_NUMBER = "255699068552";
-const WHATSAPP_MESSAGE = "Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.";
-
-export default function WhatsAppButton({ 
-  variant = "primary", 
-  size = "md", 
+export default function WhatsAppButton({
+  variant = "primary",
+  size = "md",
   className = "",
-  children 
+  children
 }: WhatsAppButtonProps) {
-  const openWhatsApp = () => {
-    const encodedMessage = encodeURIComponent(WHATSAPP_MESSAGE);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank');
-  };
-
   const sizeClasses = {
     sm: "px-3 py-2 text-sm",
     md: "px-4 py-2.5 text-[15px]",
@@ -42,7 +35,7 @@ export default function WhatsAppButton({
 
   return (
     <button
-      onClick={openWhatsApp}
+      onClick={() => openWhatsApp()}
       className={buttonClasses}
       aria-label="Chat with us on WhatsApp"
     >

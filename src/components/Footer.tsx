@@ -1,5 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import InstagramIcon from "./ui/InstagramIcon";
+import { openWhatsApp } from "../config";
 
 const columns = [
   {
@@ -46,7 +47,7 @@ export default function Footer() {
               <InstagramIcon size={17} />
             </a>
             <button
-              onClick={() => window.open(`https://wa.me/255699068552?text=${encodeURIComponent("Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.")}`, '_blank')}
+              onClick={() => openWhatsApp()}
               className="flex items-center gap-2 rounded-full border border-green-500 bg-green-500 px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-green-600 hover:border-green-600"
               aria-label="Chat with us on WhatsApp"
             >

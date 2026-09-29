@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Phone, MapPin, MessageCircle, Mail } from "lucide-react";
 import SectionHeading from "./ui/SectionHeading";
 import InstagramIcon from "./ui/InstagramIcon";
+import { openWhatsApp } from "../config";
 
 const eventTypes = [
   "Wedding",
@@ -13,10 +14,6 @@ const eventTypes = [
 ];
 
 const API_URL = import.meta.env.VITE_CONTACT_API_URL || "/api/contact";
-
-// WhatsApp configuration
-const WHATSAPP_NUMBER = "255699068552";
-const WHATSAPP_MESSAGE = "Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.";
 
 export default function ContactOrder() {
   const [submitted, setSubmitted] = useState(false);
@@ -51,11 +48,6 @@ export default function ContactOrder() {
     }
 
     return errors;
-  };
-
-  const openWhatsApp = () => {
-    const encodedMessage = encodeURIComponent(WHATSAPP_MESSAGE);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank');
   };
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -111,7 +103,7 @@ export default function ContactOrder() {
 
           <div className="mt-12 space-y-6">
             <button
-              onClick={openWhatsApp}
+              onClick={() => openWhatsApp()}
               className="flex w-full items-center gap-4 group"
             >
               <span className="grid h-12 w-12 flex-none place-items-center rounded-full bg-ink text-paper transition-colors group-hover:bg-brand-deep">
@@ -185,7 +177,7 @@ export default function ContactOrder() {
                 with design options for your event.
               </p>
               <button
-                onClick={openWhatsApp}
+                onClick={() => openWhatsApp()}
                 className="mt-6 flex items-center gap-2 rounded-full bg-green-600 px-6 py-3 text-[15px] font-medium text-white transition-colors hover:bg-green-700"
               >
                 <MessageCircle size={18} />
@@ -283,7 +275,7 @@ export default function ContactOrder() {
                 </button>
                 <button
                   type="button"
-                  onClick={openWhatsApp}
+                  onClick={() => openWhatsApp()}
                   className="flex items-center justify-center gap-2 rounded-full border border-green-600 bg-white px-6 py-3.5 text-[15px] font-medium text-green-600 transition-colors hover:bg-green-50"
                 >
                   <MessageCircle size={18} />

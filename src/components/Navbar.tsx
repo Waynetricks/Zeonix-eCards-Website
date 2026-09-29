@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Menu, X, MessageCircle } from "lucide-react";
+import { openWhatsApp } from "../config";
 
 const links = [
   { href: "#services", label: "Services" },
@@ -55,7 +56,7 @@ export default function Navbar() {
             Get Started
           </a>
           <button
-            onClick={() => window.open(`https://wa.me/255699068552?text=${encodeURIComponent("Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.")}`, '_blank')}
+            onClick={() => openWhatsApp()}
             className="flex items-center gap-2 rounded-full border border-green-600 bg-white px-4 py-2.5 text-[14px] font-medium text-green-600 transition-colors hover:bg-green-50"
             aria-label="Chat with us on WhatsApp"
           >
@@ -99,7 +100,7 @@ export default function Navbar() {
             <button
               onClick={() => {
                 setOpen(false);
-                window.open(`https://wa.me/255699068552?text=${encodeURIComponent("Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.")}`, '_blank');
+                openWhatsApp();
               }}
               className="flex items-center justify-center gap-2 rounded-full border border-green-600 bg-white px-5 py-3 text-center text-[15px] font-medium text-green-600"
               aria-label="Chat with us on WhatsApp"

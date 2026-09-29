@@ -1,8 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const WHATSAPP_NUMBER = "255699068552";
-const WHATSAPP_MESSAGE = "Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.";
+import { openWhatsApp } from "../config";
 
 export default function FloatingWhatsApp() {
   const [isVisible, setIsVisible] = useState(false);
@@ -16,17 +14,12 @@ export default function FloatingWhatsApp() {
     return () => clearTimeout(timer);
   }, []);
 
-  const openWhatsApp = () => {
-    const encodedMessage = encodeURIComponent(WHATSAPP_MESSAGE);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank');
-  };
-
   if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-40 animate-fade-in">
       <button
-        onClick={openWhatsApp}
+        onClick={() => openWhatsApp()}
         className="group flex items-center gap-3 rounded-full bg-green-600 px-5 py-3.5 text-white shadow-lg transition-all hover:bg-green-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
         aria-label="Chat with us on WhatsApp"
       >

@@ -2,6 +2,7 @@ import { Heart, PartyPopper, Plane, ChefHat, GraduationCap, Sparkles, MessageCir
 import SectionHeading from "./ui/SectionHeading";
 import ServiceCard from "./ui/ServiceCard";
 import { services } from "../data/services";
+import { openWhatsApp } from "../config";
 
 const icons = {
   wedding: Heart,
@@ -38,7 +39,7 @@ export default function Services() {
             Chat with us on WhatsApp to discuss your event requirements and get a custom quote.
           </p>
           <button
-            onClick={() => window.open(`https://wa.me/255699068552?text=${encodeURIComponent("Hello Zeonix eCards, I'm interested in getting a digital invitation. I would like to know more about your services.")}`, '_blank')}
+            onClick={() => openWhatsApp()}
             className="mt-6 flex items-center gap-2 rounded-full bg-green-600 px-6 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-green-700"
             aria-label="Chat with us on WhatsApp"
           >
